@@ -1,6 +1,6 @@
 {
   "name": "techshop-mobile",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -10,6 +10,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "expo": "~54.0.38",
+    "expo-font": "~14.0.12",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
@@ -20,5 +21,7 @@
     "@types/react": "~19.1.0",
     "typescript": "~5.9.2"
   },
-  "engines": { "node": ">=22.18" }
+  "engines": {
+    "node": ">=22.18"
+  }
 }

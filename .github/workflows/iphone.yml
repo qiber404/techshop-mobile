@@ -36,6 +36,15 @@ jobs:
           app="$RUNNER_TEMP/techshop-build/Build/Products/Release-iphoneos/TechShop.app"
           test -s "$app/main.jsbundle"
           test -s "$app/Assets.car"
+          python3 - "$app" <<'PY'
+          import hashlib, pathlib, sys
+          app = pathlib.Path(sys.argv[1])
+          assert b'FontLoaderModule' in (app / 'TechShop').read_bytes(), 'Missing native font loader'
+          assert any(app.rglob('Ionicons.ttf')), 'Missing Ionicons font'
+          photos = list(pathlib.Path('assets').rglob('*.jpg'))
+          embedded = {hashlib.sha256(p.read_bytes()).digest() for p in app.rglob('*.jpg')}
+          assert photos and all(hashlib.sha256(p.read_bytes()).digest() in embedded for p in photos)
+          PY
           lipo "$app/TechShop" -verify_arch arm64
           mkdir -p "$RUNNER_TEMP/package/Payload"
           ditto "$app" "$RUNNER_TEMP/package/Payload/TechShop.app"
@@ -49,6 +58,31 @@ jobs:
             TechShop.ipa
             TechShop.ipa.sha256
           if-no-files-found: error
+      - name: Launch the Release catalog on an iPhone simulator
+        run: |
+          set -euo pipefail
+          udid=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for k in sorted(devices,reverse=True) if ".iOS-" in k for d in devices[k] if d["name"].startswith("iPhone")))')
+          xcrun simctl boot "$udid"
+          xcodebuild -workspace ios/TechShop.xcworkspace -scheme TechShop \
+            -configuration Release -sdk iphonesimulator -destination "id=$udid" \
+            -derivedDataPath "$RUNNER_TEMP/techshop-sim" CODE_SIGNING_ALLOWED=NO -quiet build
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl install "$udid" "$RUNNER_TEMP/techshop-sim/Build/Products/Release-iphonesimulator/TechShop.app"
+          xcrun simctl launch "$udid" kz.techshop.mobile
+          swiftc tests/catalog-screen.swift -o "$RUNNER_TEMP/read-catalog"
+          for attempt in {1..10}; do
+            xcrun simctl io "$udid" screenshot "$RUNNER_TEMP/catalog.png"
+            if "$RUNNER_TEMP/read-catalog" "$RUNNER_TEMP/catalog.png"; then exit 0; fi
+            sleep 3
+          done
+          xcrun simctl spawn "$udid" log show --last 2m --predicate 'process == "TechShop"' --style compact | tail -100
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iPhone-catalog-screen
+          path: ${{ runner.temp }}/catalog.png
+          if-no-files-found: ignore
 
   release:
     needs: iphone

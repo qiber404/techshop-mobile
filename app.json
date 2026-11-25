@@ -2,7 +2,7 @@
   "expo": {
     "name": "TechShop",
     "slug": "techshop-mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,6 +15,7 @@
     "updates": { "enabled": false },
     "ios": {
       "bundleIdentifier": "kz.techshop.mobile",
+      "buildNumber": "2",
       "supportsTablet": true,
       "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
     },
