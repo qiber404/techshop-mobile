@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "TechShop",
+    "slug": "techshop-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android"],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#26382f"
+    },
+    "updates": { "enabled": false },
+    "ios": {
+      "bundleIdentifier": "kz.techshop.mobile",
+      "supportsTablet": true,
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+    },
+    "android": {
+      "package": "kz.techshop.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#26382f"
+      }
+    },
+    "plugins": ["expo-sqlite"]
+  }
+}

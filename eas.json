@@ -1,0 +1,19 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
+  "build": {
+    "iphone": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "ios": { "simulator": false }
+    },
+    "android-apk": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "distribution": "store",
+      "autoIncrement": true,
+      "ios": { "simulator": false }
+    }
+  }
+}

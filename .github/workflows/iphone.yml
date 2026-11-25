@@ -1,0 +1,70 @@
+name: Build TechShop for iPhone
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  iphone:
+    runs-on: macos-15
+    timeout-minutes: 75
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.5'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      - run: npx --no-install expo prebuild --platform ios --no-install
+      - run: pod install --project-directory=ios
+      - name: Build standalone device app
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/TechShop.xcworkspace -scheme TechShop \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/techshop-build" CODE_SIGNING_ALLOWED=NO build
+          app="$RUNNER_TEMP/techshop-build/Build/Products/Release-iphoneos/TechShop.app"
+          test -s "$app/main.jsbundle"
+          test -s "$app/Assets.car"
+          lipo -verify_arch arm64 "$app/TechShop"
+          mkdir -p "$RUNNER_TEMP/package/Payload"
+          ditto "$app" "$RUNNER_TEMP/package/Payload/TechShop.app"
+          output="$GITHUB_WORKSPACE/TechShop.ipa"
+          (cd "$RUNNER_TEMP/package" && /usr/bin/zip -qry "$output" Payload)
+          shasum -a 256 TechShop.ipa > TechShop.ipa.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TechShop-iPhone
+          path: |
+            TechShop.ipa
+            TechShop.ipa.sha256
+          if-no-files-found: error
+
+  release:
+    needs: iphone
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: TechShop-iPhone
+      - name: Publish IPA for personal signing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum -c TechShop.ipa.sha256
+          gh release create "$GITHUB_REF_NAME" TechShop.ipa TechShop.ipa.sha256 \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "TechShop $GITHUB_REF_NAME" \
+            --notes "TechShop.ipa для iPhone. Для установки подпишите файл своим Apple Account через AltServer. Инструкция — в README."

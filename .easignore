@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+ios/
+android/
+*.ipa
+*.apk
+*.jks
+*.p12
+*.mobileprovision
