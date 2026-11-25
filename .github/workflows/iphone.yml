@@ -36,7 +36,7 @@ jobs:
           app="$RUNNER_TEMP/techshop-build/Build/Products/Release-iphoneos/TechShop.app"
           test -s "$app/main.jsbundle"
           test -s "$app/Assets.car"
-          lipo -verify_arch arm64 "$app/TechShop"
+          lipo "$app/TechShop" -verify_arch arm64
           mkdir -p "$RUNNER_TEMP/package/Payload"
           ditto "$app" "$RUNNER_TEMP/package/Payload/TechShop.app"
           output="$GITHUB_WORKSPACE/TechShop.ipa"
